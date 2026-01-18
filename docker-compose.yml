@@ -1,0 +1,36 @@
+# LocalStack Docker Compose for Terraform Remote State Challenge
+# ==============================================================
+# This provides a local AWS environment for practicing without costs.
+# For real AWS experience, skip LocalStack and use actual AWS credentials.
+#
+# Usage:
+#   docker-compose up -d      # Start LocalStack
+#   docker-compose down       # Stop LocalStack
+#   docker-compose logs -f    # View logs
+#
+# NOTE: If port 4566 is in use, change the ports below.
+
+services:
+  localstack:
+    image: localstack/localstack:3.0
+    container_name: localstack-remote-state
+    ports:
+      - "4566:4566"           # LocalStack gateway (change to 4567:4566 if in use)
+    environment:
+      - SERVICES=s3,dynamodb,iam,ec2,sts,kms
+      - DEBUG=1
+      - PERSISTENCE=1
+      - DEFAULT_REGION=us-east-1
+      # Enable detailed logging
+      - LS_LOG=warn
+    volumes:
+      - localstack-remote-state-data:/var/lib/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  localstack-remote-state-data:

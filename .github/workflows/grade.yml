@@ -1,0 +1,421 @@
+# Terraform Remote State Challenge - Automated Grading
+# =====================================================
+# This workflow validates student Terraform configurations.
+
+name: Grade Challenge
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  validate:
+    name: Validate Terraform
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.6.0"
+
+      - name: Check Backend Module Files
+        id: backend-files
+        run: |
+          echo "Checking backend module files..."
+          MISSING=""
+          for file in main.tf variables.tf s3.tf dynamodb.tf outputs.tf; do
+            if [ ! -f "backend/$file" ]; then
+              MISSING="$MISSING $file"
+            fi
+          done
+          if [ -n "$MISSING" ]; then
+            echo "::error::Missing backend files:$MISSING"
+            echo "missing=true" >> $GITHUB_OUTPUT
+          else
+            echo "All backend files present"
+            echo "missing=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check IAM Module Files
+        id: iam-files
+        run: |
+          echo "Checking IAM module files..."
+          MISSING=""
+          for file in main.tf variables.tf users.tf policies.tf outputs.tf; do
+            if [ ! -f "iam/$file" ]; then
+              MISSING="$MISSING $file"
+            fi
+          done
+          if [ -n "$MISSING" ]; then
+            echo "::error::Missing IAM files:$MISSING"
+            echo "missing=true" >> $GITHUB_OUTPUT
+          else
+            echo "All IAM files present"
+            echo "missing=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check Compute Module Files
+        id: compute-files
+        run: |
+          echo "Checking compute module files..."
+          MISSING=""
+          for file in main.tf variables.tf ssh-key.tf security.tf ec2.tf outputs.tf; do
+            if [ ! -f "compute/$file" ]; then
+              MISSING="$MISSING $file"
+            fi
+          done
+          if [ -n "$MISSING" ]; then
+            echo "::error::Missing compute files:$MISSING"
+            echo "missing=true" >> $GITHUB_OUTPUT
+          else
+            echo "All compute files present"
+            echo "missing=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate Backend Module
+        id: backend-validate
+        if: steps.backend-files.outputs.missing == 'false'
+        working-directory: backend
+        run: |
+          terraform init -backend=false
+          terraform validate
+        continue-on-error: true
+
+      - name: Validate IAM Module
+        id: iam-validate
+        if: steps.iam-files.outputs.missing == 'false'
+        working-directory: iam
+        run: |
+          terraform init -backend=false
+          terraform validate
+        continue-on-error: true
+
+      - name: Validate Compute Module
+        id: compute-validate
+        if: steps.compute-files.outputs.missing == 'false'
+        working-directory: compute
+        run: |
+          terraform init -backend=false
+          terraform validate
+        continue-on-error: true
+
+  check-content:
+    name: Check Required Resources
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check S3 Bucket Configuration
+        id: s3-check
+        run: |
+          echo "Checking S3 bucket configuration..."
+          SCORE=0
+          MAX=4
+
+          # Check for S3 bucket resource
+          if grep -q 'resource "aws_s3_bucket"' backend/s3.tf 2>/dev/null; then
+            echo "S3 bucket resource found"
+            ((SCORE++))
+          else
+            echo "::warning::S3 bucket resource not found or commented out"
+          fi
+
+          # Check for versioning
+          if grep -q 'aws_s3_bucket_versioning' backend/s3.tf 2>/dev/null; then
+            echo "Versioning configuration found"
+            ((SCORE++))
+          else
+            echo "::warning::S3 versioning not configured"
+          fi
+
+          # Check for encryption
+          if grep -q 'aws_s3_bucket_server_side_encryption_configuration' backend/s3.tf 2>/dev/null; then
+            echo "Encryption configuration found"
+            ((SCORE++))
+          else
+            echo "::warning::S3 encryption not configured"
+          fi
+
+          # Check for public access block
+          if grep -q 'aws_s3_bucket_public_access_block' backend/s3.tf 2>/dev/null; then
+            echo "Public access block found"
+            ((SCORE++))
+          else
+            echo "::warning::S3 public access block not configured"
+          fi
+
+          echo "S3 Score: $SCORE/$MAX"
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+          echo "max=$MAX" >> $GITHUB_OUTPUT
+
+      - name: Check DynamoDB Table Configuration
+        id: dynamodb-check
+        run: |
+          echo "Checking DynamoDB table configuration..."
+          SCORE=0
+          MAX=2
+
+          # Check for DynamoDB table resource
+          if grep -q 'resource "aws_dynamodb_table"' backend/dynamodb.tf 2>/dev/null; then
+            echo "DynamoDB table resource found"
+            ((SCORE++))
+          else
+            echo "::warning::DynamoDB table resource not found or commented out"
+          fi
+
+          # Check for LockID hash key
+          if grep -q 'LockID' backend/dynamodb.tf 2>/dev/null; then
+            echo "LockID hash key found"
+            ((SCORE++))
+          else
+            echo "::warning::LockID hash key not found"
+          fi
+
+          echo "DynamoDB Score: $SCORE/$MAX"
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+          echo "max=$MAX" >> $GITHUB_OUTPUT
+
+      - name: Check IAM User Configuration
+        id: iam-user-check
+        run: |
+          echo "Checking IAM user configuration..."
+          SCORE=0
+          MAX=3
+
+          # Check for IAM user resource
+          if grep -q 'resource "aws_iam_user"' iam/users.tf 2>/dev/null; then
+            echo "IAM user resource found"
+            ((SCORE++))
+          else
+            echo "::warning::IAM user resource not found or commented out"
+          fi
+
+          # Check for access key resource
+          if grep -q 'resource "aws_iam_access_key"' iam/users.tf 2>/dev/null; then
+            echo "IAM access key resource found"
+            ((SCORE++))
+          else
+            echo "::warning::IAM access key resource not found or commented out"
+          fi
+
+          # Check for policy attachment
+          if grep -q 'aws_iam_user_policy_attachment' iam/users.tf 2>/dev/null; then
+            echo "Policy attachment found"
+            ((SCORE++))
+          else
+            echo "::warning::IAM policy attachment not found"
+          fi
+
+          echo "IAM User Score: $SCORE/$MAX"
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+          echo "max=$MAX" >> $GITHUB_OUTPUT
+
+      - name: Check IAM Policy Configuration
+        id: iam-policy-check
+        run: |
+          echo "Checking IAM policy configuration..."
+          SCORE=0
+          MAX=3
+
+          # Check for IAM policy resource
+          if grep -q 'resource "aws_iam_policy"' iam/policies.tf 2>/dev/null; then
+            echo "IAM policy resource found"
+            ((SCORE++))
+          else
+            echo "::warning::IAM policy resource not found or commented out"
+          fi
+
+          # Check for S3 permissions
+          if grep -q 's3:' iam/policies.tf 2>/dev/null; then
+            echo "S3 permissions found"
+            ((SCORE++))
+          else
+            echo "::warning::S3 permissions not found in policy"
+          fi
+
+          # Check for DynamoDB permissions
+          if grep -q 'dynamodb:' iam/policies.tf 2>/dev/null; then
+            echo "DynamoDB permissions found"
+            ((SCORE++))
+          else
+            echo "::warning::DynamoDB permissions not found in policy"
+          fi
+
+          echo "IAM Policy Score: $SCORE/$MAX"
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+          echo "max=$MAX" >> $GITHUB_OUTPUT
+
+      - name: Check SSH Key Configuration
+        id: ssh-check
+        run: |
+          echo "Checking SSH key configuration..."
+          SCORE=0
+          MAX=3
+
+          # Check for TLS private key
+          if grep -q 'resource "tls_private_key"' compute/ssh-key.tf 2>/dev/null; then
+            echo "TLS private key resource found"
+            ((SCORE++))
+          else
+            echo "::warning::TLS private key resource not found or commented out"
+          fi
+
+          # Check for AWS key pair
+          if grep -q 'resource "aws_key_pair"' compute/ssh-key.tf 2>/dev/null; then
+            echo "AWS key pair resource found"
+            ((SCORE++))
+          else
+            echo "::warning::AWS key pair resource not found or commented out"
+          fi
+
+          # Check for local file
+          if grep -q 'resource "local_file"' compute/ssh-key.tf 2>/dev/null; then
+            echo "Local file resource found"
+            ((SCORE++))
+          else
+            echo "::warning::Local file resource not found or commented out"
+          fi
+
+          echo "SSH Key Score: $SCORE/$MAX"
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+          echo "max=$MAX" >> $GITHUB_OUTPUT
+
+      - name: Check Security Group Configuration
+        id: security-check
+        run: |
+          echo "Checking security group configuration..."
+          SCORE=0
+          MAX=2
+
+          # Check for security group resource
+          if grep -q 'resource "aws_security_group"' compute/security.tf 2>/dev/null; then
+            echo "Security group resource found"
+            ((SCORE++))
+          else
+            echo "::warning::Security group resource not found or commented out"
+          fi
+
+          # Check for SSH port 22
+          if grep -q '22' compute/security.tf 2>/dev/null; then
+            echo "SSH port 22 configured"
+            ((SCORE++))
+          else
+            echo "::warning::SSH port 22 not found in security group"
+          fi
+
+          echo "Security Group Score: $SCORE/$MAX"
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+          echo "max=$MAX" >> $GITHUB_OUTPUT
+
+      - name: Check EC2 Instance Configuration
+        id: ec2-check
+        run: |
+          echo "Checking EC2 instance configuration..."
+          SCORE=0
+          MAX=4
+
+          # Check for EC2 instance resource
+          if grep -q 'resource "aws_instance"' compute/ec2.tf 2>/dev/null; then
+            echo "EC2 instance resource found"
+            ((SCORE++))
+          else
+            echo "::warning::EC2 instance resource not found or commented out"
+          fi
+
+          # Check for AMI data source
+          if grep -q 'data "aws_ami"' compute/ec2.tf 2>/dev/null; then
+            echo "AMI data source found"
+            ((SCORE++))
+          else
+            echo "::warning::AMI data source not found"
+          fi
+
+          # Check for key_name
+          if grep -q 'key_name' compute/ec2.tf 2>/dev/null; then
+            echo "Key name attribute found"
+            ((SCORE++))
+          else
+            echo "::warning::key_name attribute not found in EC2 instance"
+          fi
+
+          # Check for security group
+          if grep -qE 'vpc_security_group_ids|security_groups' compute/ec2.tf 2>/dev/null; then
+            echo "Security group configuration found"
+            ((SCORE++))
+          else
+            echo "::warning::Security group not configured for EC2 instance"
+          fi
+
+          echo "EC2 Instance Score: $SCORE/$MAX"
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+          echo "max=$MAX" >> $GITHUB_OUTPUT
+
+      - name: Calculate Total Score
+        id: total
+        run: |
+          S3=${{ steps.s3-check.outputs.score || 0 }}
+          S3_MAX=${{ steps.s3-check.outputs.max || 4 }}
+          DYNAMO=${{ steps.dynamodb-check.outputs.score || 0 }}
+          DYNAMO_MAX=${{ steps.dynamodb-check.outputs.max || 2 }}
+          IAM_USER=${{ steps.iam-user-check.outputs.score || 0 }}
+          IAM_USER_MAX=${{ steps.iam-user-check.outputs.max || 3 }}
+          IAM_POLICY=${{ steps.iam-policy-check.outputs.score || 0 }}
+          IAM_POLICY_MAX=${{ steps.iam-policy-check.outputs.max || 3 }}
+          SSH=${{ steps.ssh-check.outputs.score || 0 }}
+          SSH_MAX=${{ steps.ssh-check.outputs.max || 3 }}
+          SECURITY=${{ steps.security-check.outputs.score || 0 }}
+          SECURITY_MAX=${{ steps.security-check.outputs.max || 2 }}
+          EC2=${{ steps.ec2-check.outputs.score || 0 }}
+          EC2_MAX=${{ steps.ec2-check.outputs.max || 4 }}
+
+          TOTAL=$((S3 + DYNAMO + IAM_USER + IAM_POLICY + SSH + SECURITY + EC2))
+          MAX=$((S3_MAX + DYNAMO_MAX + IAM_USER_MAX + IAM_POLICY_MAX + SSH_MAX + SECURITY_MAX + EC2_MAX))
+          PERCENT=$((TOTAL * 100 / MAX))
+
+          echo "========================================"
+          echo "       CHALLENGE GRADING SUMMARY"
+          echo "========================================"
+          echo ""
+          echo "S3 Bucket:      $S3/$S3_MAX"
+          echo "DynamoDB:       $DYNAMO/$DYNAMO_MAX"
+          echo "IAM User:       $IAM_USER/$IAM_USER_MAX"
+          echo "IAM Policy:     $IAM_POLICY/$IAM_POLICY_MAX"
+          echo "SSH Keys:       $SSH/$SSH_MAX"
+          echo "Security Group: $SECURITY/$SECURITY_MAX"
+          echo "EC2 Instance:   $EC2/$EC2_MAX"
+          echo ""
+          echo "========================================"
+          echo "TOTAL SCORE: $TOTAL/$MAX ($PERCENT%)"
+          echo "========================================"
+
+          if [ $PERCENT -eq 100 ]; then
+            echo ""
+            echo "Congratulations! All checks passed!"
+          elif [ $PERCENT -ge 75 ]; then
+            echo ""
+            echo "Great progress! Almost there!"
+          elif [ $PERCENT -ge 50 ]; then
+            echo ""
+            echo "Good progress! Keep going!"
+          else
+            echo ""
+            echo "Getting started. Check the README for guidance."
+          fi
+
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "max=$MAX" >> $GITHUB_OUTPUT
+          echo "percent=$PERCENT" >> $GITHUB_OUTPUT
+
+          # Fail if not passing (less than 75%)
+          if [ $PERCENT -lt 75 ]; then
+            exit 1
+          fi

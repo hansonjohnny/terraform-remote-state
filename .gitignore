@@ -1,0 +1,43 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+.terraform.lock.hcl
+crash.log
+crash.*.log
+
+# Private keys - NEVER commit these!
+*.pem
+*.key
+private-key.pem
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# LocalStack
+localstack_data/
+volume/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Logs
+*.log
+
+# Override files (useful for local testing)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
