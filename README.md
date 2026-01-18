@@ -12,6 +12,59 @@ Welcome to the **Terraform Remote State Challenge**! This is an essential skill 
 
 ---
 
+## 🚀 Quick Start
+
+### Step 1: Fork & Clone This Repository
+
+```bash
+# Option A: Fork first (recommended for submitting work)
+# 1. Click "Fork" button on GitHub (top right)
+# 2. Clone YOUR fork:
+git clone https://github.com/YOUR-USERNAME/terraform-remote-state.git
+cd terraform-remote-state
+
+# Option B: Clone directly (for practice only)
+git clone https://github.com/techlearn-center/terraform-remote-state.git
+cd terraform-remote-state
+```
+
+### Step 2: Choose Your Path
+
+| Path | Best For | Requirements |
+|------|----------|--------------|
+| **LocalStack** | Learning, no cost | Docker, Terraform |
+| **Real AWS** | Production experience | AWS account, Terraform |
+
+### Step 3: Complete the Tasks
+
+```bash
+# For LocalStack:
+docker-compose up -d          # Start LocalStack
+cd backend && terraform init  # Start with backend module
+
+# For Real AWS:
+aws configure                 # Set up credentials
+cd backend && terraform init  # Start with backend module
+```
+
+### Step 4: Check Your Progress
+
+```bash
+python run.py                 # Local progress checker
+python dashboard.py           # Visual dashboard
+```
+
+### Step 5: Submit Your Work
+
+```bash
+git add .
+git commit -m "Complete terraform-remote-state challenge"
+git push origin main
+# Check GitHub Actions for your grade!
+```
+
+---
+
 ## 📚 Table of Contents
 
 1. [Why Remote State?](#why-remote-state)
