@@ -837,6 +837,33 @@ terraform plan
 terraform apply
 ```
 
+> **💡 Real-World Note: The Chicken-and-Egg Problem**
+>
+> In production, you face a dilemma: you need an S3 bucket to store state, but you want to use Terraform to create it!
+>
+> **Solution:** Create the backend bucket manually first using AWS CLI:
+> ```bash
+> # Create the S3 bucket (bucket names must be globally unique!)
+> aws s3api create-bucket \
+>   --bucket my-terraform-state-UNIQUE-ID \
+>   --region us-east-1
+>
+> # Enable versioning
+> aws s3api put-bucket-versioning \
+>   --bucket my-terraform-state-UNIQUE-ID \
+>   --versioning-configuration Status=Enabled
+>
+> # Create DynamoDB table for locking
+> aws dynamodb create-table \
+>   --table-name terraform-state-lock \
+>   --attribute-definitions AttributeName=LockID,AttributeType=S \
+>   --key-schema AttributeName=LockID,KeyType=HASH \
+>   --billing-mode PAY_PER_REQUEST \
+>   --region us-east-1
+> ```
+>
+> In this challenge, we use Terraform to create the backend (with local state first), then use it for other modules. This teaches you how the resources work!
+
 ---
 
 ### Task 2: Create IAM User and Access Keys
