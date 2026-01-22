@@ -1297,6 +1297,94 @@ docker-compose down -v
 docker-compose up -d
 ```
 
+### Real AWS Issues
+
+#### DynamoDB Table Stuck in "Creating" Mode
+
+If your DynamoDB table stays in "CREATING" status:
+
+**1. Check table status manually:**
+```bash
+aws dynamodb describe-table --table-name terraform-state-lock --region us-east-1
+# Look for "TableStatus" - it should be "ACTIVE"
+```
+
+**2. Common causes and fixes:**
+
+| Problem | Solution |
+|---------|----------|
+| **Still using LocalStack endpoint** | Set `use_localstack = false` in your terraform.tfvars or pass `-var="use_localstack=false"` |
+| **Table still creating** | Wait 30-60 seconds - DynamoDB tables take time to create |
+| **Missing IAM permissions** | Ensure your IAM user has `dynamodb:CreateTable`, `dynamodb:DescribeTable` permissions |
+| **Region mismatch** | Check `aws_region` variable matches your AWS CLI configuration |
+| **Stale Terraform state** | Run `terraform refresh` to sync state with actual AWS resources |
+
+**3. Quick fix for real AWS deployment:**
+
+Create a `terraform.tfvars` file in the `backend/` directory:
+```hcl
+# backend/terraform.tfvars
+use_localstack = false
+aws_region     = "us-east-1"
+```
+
+Or run with the variable:
+```bash
+cd backend
+terraform init
+terraform apply -var="use_localstack=false"
+```
+
+**4. If table is truly stuck (rare):**
+```bash
+# Delete the stuck table and let Terraform recreate it
+aws dynamodb delete-table --table-name terraform-state-lock --region us-east-1
+
+# Wait for deletion to complete
+aws dynamodb wait table-not-exists --table-name terraform-state-lock --region us-east-1
+
+# Re-run Terraform
+terraform apply -var="use_localstack=false"
+```
+
+**5. Check your IAM permissions:**
+
+Your IAM user needs these DynamoDB permissions:
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "dynamodb:CreateTable",
+    "dynamodb:DescribeTable",
+    "dynamodb:DeleteTable",
+    "dynamodb:GetItem",
+    "dynamodb:PutItem",
+    "dynamodb:DeleteItem"
+  ],
+  "Resource": "*"
+}
+```
+
+#### S3 Bucket Creation Issues
+
+```bash
+# Check if bucket exists
+aws s3 ls | grep terraform-state
+
+# Bucket names must be globally unique
+# If you get "BucketAlreadyExists", the random suffix will help
+# Or change project_name in variables
+```
+
+#### "Invalid provider configuration" Error
+
+This happens when mixing LocalStack and real AWS settings:
+```bash
+# Clear Terraform cache and reinitialize
+rm -rf .terraform .terraform.lock.hcl
+terraform init
+```
+
 ---
 
 ## Next Steps
