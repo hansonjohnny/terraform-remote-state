@@ -813,7 +813,41 @@ terraform-remote-state/
 
 ---
 
-## Tasks
+## How This Challenge Works
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                 UNDERSTAND THE WORKFLOW                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   TASKS = What Terraform code to write (the challenge)          │
+│   ──────────────────────────────────────────────────            │
+│   • Task 1: Write S3 bucket code in backend/s3.tf               │
+│   • Task 2: Write IAM user code in iam/users.tf                 │
+│   • Task 3: Write EC2 code in compute/ec2.tf                    │
+│   • Task 4: Connect to your instance                            │
+│                                                                 │
+│   STEPS = How to run/deploy (depends on your choice)            │
+│   ──────────────────────────────────────────────────            │
+│   • LocalStack: Follow "Getting Started with LocalStack"        │
+│   • Real AWS: Follow "Deploying to Real AWS"                    │
+│                                                                 │
+│   📋 WORKFLOW:                                                  │
+│   1. Choose LocalStack OR Real AWS                              │
+│   2. Follow the setup steps for your choice                     │
+│   3. Write the code for each Task                               │
+│   4. Run terraform init/plan/apply for each module              │
+│   5. Check your progress with run.py or GitHub Actions          │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Tasks (The Code You Need to Write)
+
+> **📝 These tasks are the SAME whether you use LocalStack or Real AWS.**
+> The only difference is HOW you run `terraform apply` (see sections below).
 
 ### Task 1: Create S3 Backend Infrastructure
 
@@ -830,12 +864,7 @@ Navigate to the `backend/` directory and complete the S3 and DynamoDB configurat
 4. Block all public access
 5. Create a DynamoDB table with `LockID` as the hash key
 
-```bash
-cd backend
-terraform init
-terraform plan
-terraform apply
-```
+**How to run:** (see LocalStack or Real AWS sections below)
 
 > **💡 Real-World Note: The Chicken-and-Egg Problem**
 >
@@ -880,12 +909,7 @@ Navigate to the `iam/` directory and create an IAM user for Terraform.
 3. Create a custom policy allowing S3 and DynamoDB access
 4. Attach the policy to the user
 
-```bash
-cd iam
-terraform init
-terraform plan
-terraform apply
-```
+**How to run:** (see LocalStack or Real AWS sections below)
 
 **Important:** Note the access key ID and secret - you'll need them!
 
@@ -908,12 +932,7 @@ Navigate to the `compute/` directory. This uses the remote backend!
 4. Create a security group allowing SSH access
 5. Output the connection command
 
-```bash
-cd compute
-terraform init  # This will configure the remote backend!
-terraform plan
-terraform apply
-```
+**How to run:** (see LocalStack or Real AWS sections below)
 
 ---
 
@@ -929,9 +948,14 @@ terraform output -raw ssh_command
 ssh -i private-key.pem ec2-user@<public-ip>
 ```
 
+> **Note:** SSH only works with Real AWS. LocalStack simulates EC2 but you can't actually connect.
+
 ---
 
-## Getting Started
+## Getting Started with LocalStack (Free, No AWS Account)
+
+> **Use this if:** You want to learn for free without an AWS account.
+> **Requirements:** Docker, Terraform, Python 3
 
 ### Step 1: Start LocalStack
 
@@ -952,11 +976,28 @@ export AWS_SECRET_ACCESS_KEY=test
 export AWS_DEFAULT_REGION=us-east-1
 ```
 
-### Step 3: Complete Each Task in Order
+### Step 3: Run Terraform for Each Task
 
-1. Backend first (creates S3 and DynamoDB)
-2. IAM second (creates user and keys)
-3. Compute last (uses remote backend)
+```bash
+# Task 1: Backend
+cd backend
+terraform init
+terraform plan
+terraform apply
+# Type 'yes' when prompted
+
+# Task 2: IAM
+cd ../iam
+terraform init
+terraform plan
+terraform apply
+
+# Task 3: Compute
+cd ../compute
+terraform init
+terraform plan
+terraform apply
+```
 
 ### Step 4: Check Your Progress
 
