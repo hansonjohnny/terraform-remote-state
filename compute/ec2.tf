@@ -28,6 +28,21 @@
 # =============================================================================
 # TODO: Uncomment and create the EC2 instance
 #
+# Get the latest Amazon Linux 2 AMI
+data "aws_ami" "amazon_linux_2" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
 resource "aws_instance" "web_server" {
   # Use the AMI we found in main.tf, or a specific AMI ID
   ami           = var.ami_id != "" ? var.ami_id : data.aws_ami.amazon_linux_2.id
