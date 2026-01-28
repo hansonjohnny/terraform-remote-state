@@ -1035,7 +1035,7 @@ def main():
         print(f"{Colors.GREEN}OK{Colors.END}")
 
     # Start server
-    port = 8080
+    port = 8888
     server = HTTPServer(("localhost", port), DashboardHandler)
 
     print(f"\n  {Colors.GREEN}Dashboard running at:{Colors.END}")

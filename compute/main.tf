@@ -41,22 +41,22 @@ terraform {
   #   - dynamodb_table: from output "lock_table_name"
   #   - region: from output "aws_region"
   #
-  # backend "s3" {
-  #   bucket         = "terraform-state-dev-xxxxxxxx"  # Your bucket name
-  #   key            = "compute/terraform.tfstate"     # Path in the bucket
-  #   region         = "us-east-1"                     # AWS region
-  #   encrypt        = true                            # Enable encryption
-  #   dynamodb_table = "terraform-state-lock"          # Lock table name
-  #
-  #   # For LocalStack only - remove these for real AWS!
-  #   skip_credentials_validation = true
-  #   skip_metadata_api_check     = true
-  #   force_path_style            = true
-  #   endpoints = {
-  #     s3       = "http://localhost:4566"
-  #     dynamodb = "http://localhost:4566"
-  #   }
-  # }
+  backend "s3" {
+    bucket         = "terraform-state-dev-89ad680a"  # Your bucket name
+    key            = "compute/terraform.tfstate"     # Path in the bucket
+    region         = "us-east-1"                     # AWS region
+    encrypt        = true                            # Enable encryption
+    dynamodb_table = "terraform-state-lock"          # Lock table name
+  
+    # # For LocalStack only - remove these for real AWS!
+    # skip_credentials_validation = true
+    # skip_metadata_api_check     = true
+    # force_path_style            = true
+    # endpoints = {
+    #   s3       = "http://localhost:4566"
+    #   dynamodb = "http://localhost:4566"
+    # }
+  }
 }
 
 # Provider Configuration

@@ -31,30 +31,30 @@
 # =============================================================================
 
 # Output the IAM user name
-# output "iam_user_name" {
-#   description = "Name of the IAM user"
-#   value       = aws_iam_user.terraform_deployer.name
-# }
+output "iam_user_name" {
+  description = "Name of the IAM user"
+  value       = aws_iam_user.terraform_deployer.name
+}
 
 # Output the IAM user ARN
-# output "iam_user_arn" {
-#   description = "ARN of the IAM user"
-#   value       = aws_iam_user.terraform_deployer.arn
-# }
+output "iam_user_arn" {
+  description = "ARN of the IAM user"
+  value       = aws_iam_user.terraform_deployer.arn
+}
 
 # Output the Access Key ID
-# output "access_key_id" {
-#   description = "Access Key ID for the IAM user"
-#   value       = aws_iam_access_key.terraform_deployer.id
-# }
+output "access_key_id" {
+  description = "Access Key ID for the IAM user"
+  value       = aws_iam_access_key.terraform_deployer.id
+}
 
 # Output the Secret Access Key
 # IMPORTANT: This is marked as sensitive so it won't show in logs
-# output "secret_access_key" {
-#   description = "Secret Access Key for the IAM user (KEEP THIS SECRET!)"
-#   value       = aws_iam_access_key.terraform_deployer.secret
-#   sensitive   = true  # This hides the value in output
-# }
+output "secret_access_key" {
+  description = "Secret Access Key for the IAM user (KEEP THIS SECRET!)"
+  value       = aws_iam_access_key.terraform_deployer.secret
+  sensitive   = true  # This hides the value in output
+}
 
 # =============================================================================
 # How to View the Secret Access Key

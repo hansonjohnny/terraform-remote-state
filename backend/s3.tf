@@ -29,19 +29,19 @@
 # The bucket name comes from local.bucket_name (defined in main.tf)
 # It includes a random suffix to make it globally unique
 #
-# resource "aws_s3_bucket" "terraform_state" {
-#   bucket = local.bucket_name
-#
-#   # Prevent accidental deletion of this important bucket!
-#   # In production, set this to true
-#   force_destroy = true  # Set to false in production!
-#
-#   tags = {
-#     Name        = "Terraform State Bucket"
-#     Purpose     = "terraform-state"
-#     Environment = var.environment
-#   }
-# }
+resource "aws_s3_bucket" "terraform_state" {
+  bucket = local.bucket_name
+
+  # Prevent accidental deletion of this important bucket!
+  # In production, set this to true
+  force_destroy = true  # Set to false in production!
+
+  tags = {
+    Name        = "Terraform State Bucket"
+    Purpose     = "terraform-state"
+    Environment = var.environment
+  }
+}
 
 # =============================================================================
 # STEP 2: Enable Versioning
@@ -51,13 +51,13 @@
 # Versioning keeps every version of your state file.
 # If something goes wrong, you can recover a previous version!
 #
-# resource "aws_s3_bucket_versioning" "terraform_state" {
-#   bucket = aws_s3_bucket.terraform_state.id
-#
-#   versioning_configuration {
-#     status = "Enabled"
-#   }
-# }
+resource "aws_s3_bucket_versioning" "terraform_state" {
+  bucket = aws_s3_bucket.terraform_state.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
 
 # =============================================================================
 # STEP 3: Enable Server-Side Encryption
@@ -67,17 +67,17 @@
 # State files contain sensitive information (passwords, keys, etc.)
 # Encryption protects this data at rest in S3.
 #
-# resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" {
-#   bucket = aws_s3_bucket.terraform_state.id
-#
-#   rule {
-#     apply_server_side_encryption_by_default {
-#       # AES256 is the simplest encryption option
-#       # For higher security, use "aws:kms" with a KMS key
-#       sse_algorithm = "AES256"
-#     }
-#   }
-# }
+resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" {
+  bucket = aws_s3_bucket.terraform_state.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      # AES256 is the simplest encryption option
+      # For higher security, use "aws:kms" with a KMS key
+      sse_algorithm = "AES256"
+    }
+  }
+}
 
 # =============================================================================
 # STEP 4: Block Public Access
@@ -87,12 +87,12 @@
 # State files should NEVER be public!
 # This setting prevents accidental public exposure.
 #
-# resource "aws_s3_bucket_public_access_block" "terraform_state" {
-#   bucket = aws_s3_bucket.terraform_state.id
-#
-#   # Block all four types of public access
-#   block_public_acls       = true   # Block public ACLs
-#   block_public_policy     = true   # Block public bucket policies
-#   ignore_public_acls      = true   # Ignore any public ACLs
-#   restrict_public_buckets = true   # Restrict public bucket policies
-# }
+resource "aws_s3_bucket_public_access_block" "terraform_state" {
+  bucket = aws_s3_bucket.terraform_state.id
+
+  # Block all four types of public access
+  block_public_acls       = true   # Block public ACLs
+  block_public_policy     = true   # Block public bucket policies
+  ignore_public_acls      = true   # Ignore any public ACLs
+  restrict_public_buckets = true   # Restrict public bucket policies
+}
