@@ -124,7 +124,7 @@ jobs:
           # Check for S3 bucket resource
           if grep -q 'resource "aws_s3_bucket"' backend/s3.tf 2>/dev/null; then
             echo "S3 bucket resource found"
-            ((SCORE++))
+            ((SCORE++)) || true
           else
             echo "::warning::S3 bucket resource not found or commented out"
           fi
@@ -132,7 +132,7 @@ jobs:
           # Check for versioning
           if grep -q 'aws_s3_bucket_versioning' backend/s3.tf 2>/dev/null; then
             echo "Versioning configuration found"
-            ((SCORE++))
+            ((SCORE++)) || true
           else
             echo "::warning::S3 versioning not configured"
           fi
@@ -140,7 +140,7 @@ jobs:
           # Check for encryption
           if grep -q 'aws_s3_bucket_server_side_encryption_configuration' backend/s3.tf 2>/dev/null; then
             echo "Encryption configuration found"
-            ((SCORE++))
+            ((SCORE++)) || true
           else
             echo "::warning::S3 encryption not configured"
           fi
@@ -148,7 +148,7 @@ jobs:
           # Check for public access block
           if grep -q 'aws_s3_bucket_public_access_block' backend/s3.tf 2>/dev/null; then
             echo "Public access block found"
-            ((SCORE++))
+            ((SCORE++)) || true
           else
             echo "::warning::S3 public access block not configured"
           fi
@@ -167,7 +167,7 @@ jobs:
           # Check for DynamoDB table resource
           if grep -q 'resource "aws_dynamodb_table"' backend/dynamodb.tf 2>/dev/null; then
             echo "DynamoDB table resource found"
-            ((SCORE++))
+            ((SCORE++)) || true
           else
             echo "::warning::DynamoDB table resource not found or commented out"
           fi
@@ -175,7 +175,7 @@ jobs:
           # Check for LockID hash key
           if grep -q 'LockID' backend/dynamodb.tf 2>/dev/null; then
             echo "LockID hash key found"
-            ((SCORE++))
+            ((SCORE++)) || true
           else
             echo "::warning::LockID hash key not found"
           fi
@@ -194,7 +194,7 @@ jobs:
           # Check for IAM user resource
           if grep -q 'resource "aws_iam_user"' iam/users.tf 2>/dev/null; then
             echo "IAM user resource found"
-            ((SCORE++))
+            ((SCORE++)) || true
           else
             echo "::warning::IAM user resource not found or commented out"
           fi
@@ -202,7 +202,7 @@ jobs:
           # Check for access key resource
           if grep -q 'resource "aws_iam_access_key"' iam/users.tf 2>/dev/null; then
             echo "IAM access key resource found"
-            ((SCORE++))
+            ((SCORE++)) || true
           else
             echo "::warning::IAM access key resource not found or commented out"
           fi
@@ -210,7 +210,7 @@ jobs:
           # Check for policy attachment
           if grep -q 'aws_iam_user_policy_attachment' iam/users.tf 2>/dev/null; then
             echo "Policy attachment found"
-            ((SCORE++))
+            ((SCORE++)) || true
           else
             echo "::warning::IAM policy attachment not found"
           fi
@@ -229,7 +229,7 @@ jobs:
           # Check for IAM policy resource
           if grep -q 'resource "aws_iam_policy"' iam/policies.tf 2>/dev/null; then
             echo "IAM policy resource found"
-            ((SCORE++))
+            ((SCORE++)) || true
           else
             echo "::warning::IAM policy resource not found or commented out"
           fi
@@ -245,7 +245,7 @@ jobs:
           # Check for DynamoDB permissions
           if grep -q 'dynamodb:' iam/policies.tf 2>/dev/null; then
             echo "DynamoDB permissions found"
-            ((SCORE++))
+            ((SCORE++)) || true
           else
             echo "::warning::DynamoDB permissions not found in policy"
           fi
@@ -264,7 +264,7 @@ jobs:
           # Check for TLS private key
           if grep -q 'resource "tls_private_key"' compute/ssh-key.tf 2>/dev/null; then
             echo "TLS private key resource found"
-            ((SCORE++))
+            ((SCORE++)) || true
           else
             echo "::warning::TLS private key resource not found or commented out"
           fi
@@ -272,7 +272,7 @@ jobs:
           # Check for AWS key pair
           if grep -q 'resource "aws_key_pair"' compute/ssh-key.tf 2>/dev/null; then
             echo "AWS key pair resource found"
-            ((SCORE++))
+            ((SCORE++)) || true
           else
             echo "::warning::AWS key pair resource not found or commented out"
           fi
@@ -280,7 +280,7 @@ jobs:
           # Check for local file
           if grep -q 'resource "local_file"' compute/ssh-key.tf 2>/dev/null; then
             echo "Local file resource found"
-            ((SCORE++))
+            ((SCORE++)) || true
           else
             echo "::warning::Local file resource not found or commented out"
           fi
@@ -299,7 +299,7 @@ jobs:
           # Check for security group resource
           if grep -q 'resource "aws_security_group"' compute/security.tf 2>/dev/null; then
             echo "Security group resource found"
-            ((SCORE++))
+            ((SCORE++)) || true
           else
             echo "::warning::Security group resource not found or commented out"
           fi
@@ -307,7 +307,7 @@ jobs:
           # Check for SSH port 22
           if grep -q '22' compute/security.tf 2>/dev/null; then
             echo "SSH port 22 configured"
-            ((SCORE++))
+            ((SCORE++)) || true
           else
             echo "::warning::SSH port 22 not found in security group"
           fi
@@ -326,7 +326,7 @@ jobs:
           # Check for EC2 instance resource
           if grep -q 'resource "aws_instance"' compute/ec2.tf 2>/dev/null; then
             echo "EC2 instance resource found"
-            ((SCORE++))
+            ((SCORE++)) || true
           else
             echo "::warning::EC2 instance resource not found or commented out"
           fi
@@ -334,7 +334,7 @@ jobs:
           # Check for AMI data source
           if grep -q 'data "aws_ami"' compute/ec2.tf 2>/dev/null; then
             echo "AMI data source found"
-            ((SCORE++))
+            ((SCORE++)) || true
           else
             echo "::warning::AMI data source not found"
           fi
@@ -342,7 +342,7 @@ jobs:
           # Check for key_name
           if grep -q 'key_name' compute/ec2.tf 2>/dev/null; then
             echo "Key name attribute found"
-            ((SCORE++))
+            ((SCORE++)) ||true
           else
             echo "::warning::key_name attribute not found in EC2 instance"
           fi
@@ -350,7 +350,7 @@ jobs:
           # Check for security group
           if grep -qE 'vpc_security_group_ids|security_groups' compute/ec2.tf 2>/dev/null; then
             echo "Security group configuration found"
-            ((SCORE++))
+            ((SCORE++)) || true
           else
             echo "::warning::Security group not configured for EC2 instance"
           fi
